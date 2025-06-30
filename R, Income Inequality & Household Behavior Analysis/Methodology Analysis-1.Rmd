@@ -1,0 +1,455 @@
+---
+title: "Methodology Analysis"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-05-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+```
+
+**Gini Ration data**
+
+```{r}
+library(readxl)
+library(haven)
+library(dplyr)
+library(haven)
+library(dplyr)
+library(DescTools)
+library(mice)
+
+# Perkotaan
+Perkotaan <- read_excel("Gini Ratio Menurut Provinsi dan Daerah_ 2014_FIXED.xlsx", sheet = 1)
+
+# Perdesaan
+Perdesaan <- read_excel("Gini Ratio Menurut Provinsi dan Daerah_ 2014_FIXED.xlsx", sheet = 2)
+
+# Perkotaan + Perdesaan
+Perkotaan_Perdesaan <- read_excel("Gini Ratio Menurut Provinsi dan Daerah_ 2014_FIXED.xlsx", sheet = 3)
+
+```
+
+**IFLS Wave 5**
+
+```{r}
+# Import relevant .dta files
+household <- read_dta("bk1.dta")          # Household roster (income, education, urban/rural)
+income <- read_dta("hin.dta")             # Household income and assets
+transfers <- read_dta("bk1_tr.dta")       # Transfer module (monetary/in-kind transfers)
+indiv_roster <- read_dta("bk1_ir.dta")    # Individual roster (education)
+community <- read_dta("pkk.dta")          # Community data (collective actions, social infrastructure)
+comm_participation <- read_dta("pkk_pm.dta")  # Community participation (collective actions frequency)
+```
+
+**Data Preparation and cleaning**
+
+```{r, message=FALSE, warning=FALSE}
+
+# Select relevant columns from each dataset
+household_subset <- household %>%
+  select(idw, commid14, ea, c2)
+
+income_subset <- income %>%
+  select(idw, commid14, ea)  # Income variable missing, to be addressed
+
+transfers_subset <- transfers %>%
+  select(idw, commid14, tr03, tr04)
+
+indiv_roster_subset <- indiv_roster %>%
+  select(idw, commid14, ir3, ir3a)
+
+community_subset <- community %>%
+  select(commid14, j21a, pap39, pap83_1, j10a)
+
+comm_participation_subset <- comm_participation %>%
+  select(commid14, pm03a)
+
+# Merge household-level data
+merged_data <- household_subset %>%
+  left_join(income_subset, by = c("idw", "commid14", "ea")) %>%
+  left_join(transfers_subset, by = c("idw", "commid14")) %>%
+  left_join(indiv_roster_subset, by = c("idw", "commid14"))
+
+# Aggregate education to household level (e.g., max education)
+merged_data <- merged_data %>%
+  group_by(idw) %>%
+  mutate(educ = max(ir3a, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(-ir3, -ir3a)  # Remove individual-level education
+
+# Merge with community-level data
+merged_data <- merged_data %>%
+  left_join(community_subset, by = "commid14") %>%
+  left_join(comm_participation_subset, by = "commid14")
+
+# Audit merge (10% sample)
+set.seed(123)
+audit_sample <- merged_data[sample(nrow(merged_data), 0.1 * nrow(merged_data)), ]
+
+# Select relevant columns, including d19a
+household_subset <- household %>%
+  select(idw, commid14, ea, c2, d19a)
+
+income_subset <- income %>%
+  select(idw, commid14, ea)
+
+transfers_subset <- transfers %>%
+  select(idw, commid14, tr03, tr04)
+
+indiv_roster_subset <- indiv_roster %>%
+  select(idw, commid14, ir3, ir3a)
+
+community_subset <- community %>%
+  select(commid14, j21a, pap39, pap83_1, j10a)
+
+comm_participation_subset <- comm_participation %>%
+  select(commid14, pm03a)
+
+# Merge household-level data
+merged_data <- household_subset %>%
+  left_join(income_subset, by = c("idw", "commid14", "ea")) %>%
+  left_join(transfers_subset, by = c("idw", "commid14")) %>%
+  left_join(indiv_roster_subset, by = c("idw", "commid14"))
+
+# Aggregate education to household level
+merged_data <- merged_data %>%
+  group_by(idw) %>%
+  mutate(educ = max(ir3a, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(-ir3, -ir3a)
+```
+
+**Audit data merge**
+
+```{r, message=FALSE, warning=FALSE}
+
+# Re-select transfers_subset with correct variable (e.g., tr01)
+transfers_subset <- transfers %>%
+  select(idw, commid14, tr01, tr04)  # Replace tr03 with tr01
+
+# Re-run merge
+household_subset <- household %>%
+  select(idw, commid14, ea, c2, d19a, d19b, d19c)
+
+income_subset <- income %>%
+  select(idw, commid14, ea)
+
+indiv_roster_subset <- indiv_roster %>%
+  select(idw, commid14, ir3, ir3a)
+
+community_subset <- community %>%
+  select(commid14, j21a, pap39, pap83_1, j10a)
+
+comm_participation_subset <- comm_participation %>%
+  select(commid14, pm03a)
+
+merged_data <- household_subset %>%
+  left_join(income_subset, by = c("idw", "commid14", "ea")) %>%
+  left_join(transfers_subset, by = c("idw", "commid14")) %>%
+  left_join(indiv_roster_subset, by = c("idw", "commid14"))
+
+# Aggregate education
+merged_data <- merged_data %>%
+  group_by(idw) %>%
+  mutate(educ = max(ir3a, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(-ir3, -ir3a)
+
+# Merge community data
+merged_data <- merged_data %>%
+  left_join(community_subset, by = "commid14") %>%
+  left_join(comm_participation_subset, by = "commid14")
+
+```
+
+**Province-Level Merge-Crosswalk**
+
+```{r, message=FALSE, warning=FALSE}
+# Clean d19a
+merged_data$d19a <- gsub("_", "", merged_data$d19a)
+merged_data$d19a <- as.numeric(merged_data$d19a)
+
+# Province crosswalk
+province_crosswalk <- data.frame(
+  d19b = c("11", "12", "13", "14", "15", "16", "17", "18", "19", "21"),
+  Provinci = c("ACEH", "SUMATERA UTARA", "SUMATERA BARAT", "RIAU", "JAMBI", 
+               "SUMATERA SELATAN", "BENGKULU", "LAMPUNG", "KEP. BANGKA BELITUNG", "KEP. RIAU")
+)
+
+# Merge
+merged_data <- merged_data %>%
+  left_join(province_crosswalk, by = "d19b") %>%
+  left_join(Perkotaan_Perdesaan, by = "Provinci")
+
+# Check merge
+missing_gini <- sum(is.na(merged_data$Gini_2014)) / nrow(merged_data)
+cat("Proportion of missing Gini values:", missing_gini, "\n")
+
+# Crosswalk
+crosswalk <- data.frame(
+  ifls_province = merged_data$d19b,
+  bps_province = merged_data$Provinci
+)
+```
+
+```{r, message=FALSE, warning=FALSE}
+
+# Rename tr01 to tr03 for consistency
+merged_data <- merged_data %>%
+  rename(tr03 = tr01)
+
+# Transfers: Winsorize
+tr03_quantiles <- quantile(merged_data$tr03, probs = c(0.01, 0.99), na.rm = TRUE)
+min_val <- tr03_quantiles[1]
+max_val <- tr03_quantiles[2]
+merged_data$tr03 <- pmin(pmax(merged_data$tr03, min_val), max_val)
+
+# Log-transform
+merged_data$log_transfer <- log1p(merged_data$tr03)
+
+# CPI adjustment
+cpi_2014 <- 133.83  # Replace with actual 2014 CPI
+cpi_base <- 100
+merged_data$tr03_adj <- merged_data$tr03 * (cpi_2014 / cpi_base)
+
+# Collective Actions: Recode
+merged_data$j21a[merged_data$j21a > 365 | merged_data$j21a < 0] <- NA
+merged_data$j21a[merged_data$j21a == 99] <- NA
+
+# Income: Impute
+imputed_data <- mice(merged_data %>% select(tr03, educ, c2), method = "pmm", m = 5, seed = 123)
+merged_data$hhinc <- complete(imputed_data)$tr03
+merged_data$hhinc_quintile <- ntile(merged_data$hhinc, 5)
+
+# Filter
+final_data <- merged_data %>%
+  filter(!is.na(tr03_adj) & !is.na(j21a) & !is.na(hhinc_quintile) & !is.na(c2) & tr03_adj > 0) %>%
+  group_by(d19b) %>%
+  filter(n() >= 10) %>%
+  ungroup()
+
+# Gini tertile based on Gini_2014 (likely from Semester 1)
+final_data <- final_data %>%
+  mutate(
+    Gini_2014 = `Semester 1 (Maret)`,
+    gini_tertile = ntile(Gini_2014, 3),
+    gini_tertile = case_when(
+      gini_tertile == 1 ~ "Low",
+      gini_tertile == 2 ~ "Medium",
+      gini_tertile == 3 ~ "High"
+    )
+  )
+
+
+```
+
+> > Descriptive statistics
+
+```{r, message=FALSE, warning=FALSE}
+# Updated Descriptive Stats with Median
+descriptive_stats <- final_data %>%
+  group_by(gini_tertile) %>%
+  summarise(
+    mean_transfers = mean(log_transfer, na.rm = TRUE),
+    sd_transfers = sd(log_transfer, na.rm = TRUE),
+    median_transfers = median(log_transfer, na.rm = TRUE),
+    
+    mean_coll_actions = mean(tr03_adj, na.rm = TRUE),
+    sd_coll_actions = sd(tr03_adj, na.rm = TRUE),
+    median_coll_actions = median(tr03_adj, na.rm = TRUE)
+  )
+
+print(descriptive_stats)
+```
+
+Inferential Statistics Examples
+
+```{r}
+# Subset data
+low_group <- final_data %>% filter(gini_tertile == "Low") %>% pull(log_transfer)
+high_group <- final_data %>% filter(gini_tertile == "High") %>% pull(log_transfer)
+
+# Check number of observations in each group
+cat("Low group size:", length(low_group), "\n")
+cat("High group size:", length(high_group), "\n")
+
+# Independent samples t-test with safety check
+if (length(low_group) > 1 & length(high_group) > 1) {
+  t_test_result <- t.test(low_group, high_group)
+  print(t_test_result)
+} else {
+  cat("❗ Not enough observations in one or both groups for t-test.\n")
+}
+
+```
+
+ANOVA
+
+```{r}
+# Check the number of unique levels
+unique_levels <- unique(final_data$gini_tertile)
+cat("Levels in gini_tertile:", unique_levels, "\n")
+
+if (length(unique_levels) >= 2) {
+  anova_model <- aov(log_transfer ~ gini_tertile, data = final_data)
+  summary(anova_model)
+} else {
+  cat("❗ ANOVA cannot be performed: less than 2 levels in gini_tertile.\n")
+}
+
+```
+
+> > Regression Analysis
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(lme4)
+library(lmtest)
+library(car)
+
+# Reshape final_data to long format
+final_data_long <- final_data %>%
+  select(idw, d19b, pap83_1, hhinc_quintile, educ, c2, log_transfer, tr03_adj) %>%
+  pivot_longer(
+    cols = c(log_transfer, tr03_adj),
+    names_to = "ProsocialType",
+    values_to = "Outcome"
+  ) %>%
+  mutate(
+    ProsocialType = factor(ProsocialType, levels = c("log_transfer", "tr03_adj"),
+                           labels = c("Direct Transfers", "Collective Actions"))
+  )
+
+final_data_long <- final_data_long %>%
+  mutate(
+    educ_label = case_when(
+      educ == 15 ~ "Adult education C",
+      educ == 61 ~ "Bachelor",
+      educ == 6 ~ "Senior high vocational",
+      educ == 5 ~ "Senior high general",
+      educ == 98 ~ NA_character_,
+      educ == 60 ~ "College",
+      educ == 62 ~ "Master",
+      educ == 12 ~ "Adult Education B",
+      educ == 74 ~ "Islamic Senior High School",
+      educ == 95 ~ NA_character_,
+      educ == 73 ~ "Junior High",
+      TRUE ~ as.character(educ)
+    ),
+    educ_years = case_when(
+      educ == 15 ~ 12,
+      educ == 61 ~ 16,
+      educ == 6 ~ 12,
+      educ == 5 ~ 12,
+      educ == 98 ~ NA_real_,
+      educ == 60 ~ 15,
+      educ == 62 ~ 18,
+      educ == 12 ~ 9,
+      educ == 74 ~ 12,
+      educ == 95 ~ NA_real_,
+      educ == 73 ~ 9,
+      TRUE ~ NA_real_
+    )
+  )
+```
+
+**Run Multilevel Regression**
+
+model 1
+
+```{r, message=FALSE, warning=FALSE}
+
+library(lme4)
+library(lmerTest)
+
+model1 <- lmer(
+  Outcome ~ pap83_1 * ProsocialType + hhinc_quintile + educ_label + c2 + (1 | d19b),
+  data = final_data_long
+)
+
+summary(model1)
+```
+
+model 2
+
+```{r}
+final_data_long$log_Outcome <- log(final_data_long$Outcome + 1)  # Adding 1 to avoid log(0)
+
+model2 <- lmer(
+  log_Outcome ~ pap83_1 * ProsocialType + hhinc_quintile + educ_label + c2 + (1 | d19b),
+  data = final_data_long
+)
+summary(model2)
+```
+
+**Likelihood Ratio Test (LRT)**
+
+```{r, message=FALSE, warning=FALSE}
+
+# Reduced Model 1 (no interaction)
+reduced_model1 <- lmer(
+  Outcome ~ pap83_1 + ProsocialType + hhinc_quintile + educ + c2 + (1 | d19b),
+  data = final_data_long
+)
+
+# LRT: Compare reduced vs full model (Model 1)
+lrt_model1 <- anova(reduced_model1, model1, test = "Chisq")
+print(lrt_model1)
+
+# Reduced Model 2 (log-transformed outcome, no interaction)
+reduced_model2 <- lmer(
+  log_Outcome ~ pap83_1 + ProsocialType + hhinc_quintile + educ + c2 + (1 | d19b),
+  data = final_data_long
+)
+
+# LRT: Compare reduced vs full model (Model 2)
+lrt_model2 <- anova(reduced_model2, model2, test = "Chisq")
+print(lrt_model2)
+
+```
+
+**Robustness Checks**
+
+```{r, message=FALSE, warning=FALSE}
+
+# Sensitivity analysis: Exclude provinces with extreme Gini values
+extreme_gini <- quantile(final_data$pap83_1, probs = c(0.05, 0.95), na.rm = TRUE)
+sensitivity_data <- final_data_long %>%
+  filter(pap83_1 >= extreme_gini[1] & pap83_1 <= extreme_gini[2])
+
+sensitivity_model <- lmer(
+  Outcome ~ pap83_1 * ProsocialType + hhinc_quintile + educ + c2 + (1 | d19b),
+  data = sensitivity_data
+)
+summary(sensitivity_model)
+
+```
+
+**Assumption checks**
+
+```{r,message=FALSE, warning=FALSE}
+# Linearity: Residuals vs. Predicted
+plot(fitted(model1), residuals(model1), 
+     xlab = "Predicted Values", ylab = "Residuals", 
+     main = "Residuals vs. Predicted")
+abline(h = 0, col = "red")
+
+
+# Multicollinearity: VIF
+library(car)
+fixed_effects_model <- lm(
+  Outcome ~ pap83_1 * ProsocialType + hhinc_quintile + educ + c2,
+  data = final_data_long
+)
+vif_values <- vif(fixed_effects_model)
+print(vif_values)
+
+# ICC for random effects (if main model works)
+icc <- VarCorr(model1)$d19b[1] / (VarCorr(model1)$d19b[1] + sigma(model1)^2)
+cat("Intraclass Correlation Coefficient (ICC):", icc, "\n")
+```
