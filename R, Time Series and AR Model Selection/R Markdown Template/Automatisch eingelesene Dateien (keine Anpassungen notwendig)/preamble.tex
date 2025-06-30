@@ -1,0 +1,67 @@
+% =============== Call additional LaTeX packages ============= %
+
+\renewcommand{\contentsname}{Inhaltsverzeichnis}
+\renewcommand{\listfigurename}{Abbildungsverzeichnis}
+\renewcommand{\listtablename}{Tabellenverzeichnis}
+\renewcommand\refname{Literatur}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\setlength{\headheight}{14.5pt}
+\fancyhf{}
+\fancyhead[R]{\leftmark}
+\fancyhead[L]{W2453 - ZAFinÖk - Projekt - SS 2025}
+\fancyfoot[C]{\thepage}  
+  
+\usepackage{booktabs}            % for more scientific looking tables
+
+\usepackage[nottoc]{tocbibind}   % to state list of tables and list of figures
+                                 %   in the table of contents 
+
+\usepackage[skins]{tcolorbox}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+
+\usepackage{mathabx}
+
+\babelprovide[hyphenrules=ngerman-x-latest]{ngerman}
+
+% ============= Define additional commands =================== %
+
+% Command for R language print -> \R
+\newcommand{\R}{{\fontfamily{lmss}\selectfont R }}
+
+% Command for Python language print -> \Python
+\newcommand{\Python}{{\fontfamily{lmss}\selectfont Python }}
+
+% Command for C++ language print -> \Cpp
+\newcommand{\Cpp}{{\fontfamily{lmss}\selectfont C++ }}
+
+% Command for LaTeX name print -> \latex
+\newcommand{\latex}{{\fontfamily{qpl}\selectfont LaTeX }}
+
+% Command for MiKTeXname print -> \miktex
+\newcommand{\miktex}{{\fontfamily{qpl}\selectfont MiKTeX }}
+
+% Command for package name print -> \pkg{package_name}
+\newcommand{\pkg}[1]{{\fontfamily{pbk}\fontsize{11}{12}\selectfont #1}}
+
+% Commands to format any text using the font families lmss, pql and pbk
+\newcommand{\lmss}[1]{{\fontfamily{lmss}\selectfont #1}}
+\newcommand{\qpl}[1]{{\fontfamily{qpl}\selectfont #1}}
+\newcommand{\pbk}[1]{{\fontfamily{pbk}\fontsize{11}{12}\selectfont #1}}
+
+% Apply color 'violet' to text -> \violet
+\newcommand{\violet}[1]{\textcolor{violet}{#1}}
+
+% ============ Encourage LaTeX not to move figures =============== %
+% ====== by Yihui Xie, Christophe Derviex and Emily Riederer ===== %
+% ======        R Markdown Cookbook (2021), p. 87            ===== %
+
+\renewcommand{\topfraction}{.85}
+\renewcommand{\bottomfraction}{.7}
+\renewcommand{\textfraction}{.15}
+\renewcommand{\floatpagefraction}{.66}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{3}
+\setcounter{totalnumber}{4}

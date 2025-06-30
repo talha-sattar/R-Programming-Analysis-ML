@@ -1,0 +1,9 @@
+Um die Vorlage in R Markdown nutzen zu können, laden Sie bitte den kompletten Ordner "Vorlage R Markdown" 
+mit allen darin enthaltenen Dateien und Ordnern herunter. Speichern Sie alles exakt so in demselben
+Verzeichnis auf Ihrem Computer.
+
+Der Projektbericht kann dann mit der Datei "W2453 - ZAFinOek - Projekt - R Markdown Vorlage - SS2023.Rmd"
+(ggf. mit anderer Jahreszahl im namen für spätere Semester) erstellt werden.
+
+Die Nutzung von R Markdown ist nur für Studentinnen und Studenten empfohlen, die R Markdown bereits
+genutzt haben und einige grundlegende Kenntnisse im Umgang damit haben.

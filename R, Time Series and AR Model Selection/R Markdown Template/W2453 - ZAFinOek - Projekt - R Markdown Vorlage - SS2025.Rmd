@@ -1,0 +1,220 @@
+---
+output:                           # Output-Datei-Typ
+  bookdown::pdf_document2:        # PDF-Datei aus bookdown-Paket
+    keep_tex: false
+    document_class: article       # Klasse 'article'
+    toc: false
+    toc_depth: 3                  # Inhaltsverz. bis Ebene 3 
+    number_sections: false        # Automatische Abschnittsnummerierung aus
+    fig_caption: true             # Abbildungstexte hinzufuegen
+    highlight: null               # Kein Code-Highlighting    
+    includes:
+      in_header: "Automatisch eingelesene Dateien (keine Anpassungen notwendig)/preamble.tex" # Externer LaTeX-Code
+linestretch: 1.3                  # Zeilenanbstand 1.3
+fontsize: 12pt                    # Schriftgröße 12pt
+papersize: a4                     # A4-Seitenformat
+bibliography: ["Automatisch eingelesene Dateien (keine Anpassungen notwendig)/packages.bib", "Referenzen (bitte anpassen sofern notwendig)/referenzen.bib"]       # Externe Referenzen
+csl: "Automatisch eingelesene Dateien (keine Anpassungen notwendig)/citationstyle.csl"    # Zitationsstil-Datei
+citation_package: biblatex        # Nutze 'biblatex' für Zitate
+lang: de                          # Stelle das Wörterbuch auf Deutsch für Begriffe wie "Abbildung" etc.
+babel-lang: ngerman
+---
+
+```{r setup, include=FALSE}
+local({
+  hook_source_old <- knitr::knit_hooks$get("source")
+  hook_output_old <- knitr::knit_hooks$get("output")
+  knitr::knit_hooks$set(source = function(x, options){
+    x <- xfun::split_lines(x)
+    x <- paste0(options$indent.code, x)
+    x <- paste(x, collapse = "\n")
+    hook_source_old(x, options)
+  })
+  knitr::knit_hooks$set(output = function(x, options){
+    x <- xfun::split_lines(x)
+    x <- paste0(options$indent.code, x)
+    x <- paste(x, collapse = "\n")
+    hook_output_old(x, options)
+  })
+})
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, include = FALSE, 
+  comment = "  #>", fig.height = 3.5, fig.width = 7, indent.code = "  ", 
+  fig.align = "center", dpi = 1200)
+```
+\pagenumbering{roman}\thispagestyle{empty}
+
+```{r, out.width="45%", out.height="45%", fig.align="center", include = TRUE}
+knitr::include_graphics("Automatisch eingelesene Dateien (keine Anpassungen notwendig)/Logo_UPB.png")
+```
+
+\vspace{-0.5cm}
+
+\par\noindent\rule{\textwidth}{0.4pt}\vspace{-0.2cm}
+
+\begin{center}
+\begin{large}
+
+W2453 - Angewandte Zeitreihenanalyse und Einführung in die Finanzökonometrie, Sommersemester 2025\vspace{-0.5cm}
+
+\end{large}
+\end{center}
+
+\par\noindent\rule{\textwidth}{0.4pt}\vspace{+2.5cm}
+
+\vspace{-1.7cm}
+
+\begin{center}
+\begin{Large}
+
+\bf{Angewandtes Zeitreihenanalyse-Projekt mit R} \vspace{+1.1cm}
+
+\end{Large}
+\end{center}
+
+\begin{center}
+\begin{tabular}{ll}
+\bf{Dozenten:} & Prof. Dr. Yuanhua Feng\\
+\bf{Assistent:} & Dominik Schulz, Torben Sögtrop\\
+\bf{Projektbeginn:} & 17. Juni 2025\\
+\bf{Projektfrist:} & 11. Juli 2025, 23:59 Uhr\vspace{+1.5cm}
+\end{tabular}
+\end{center}
+
+```{=latex}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+Aufgabe & 1 & 2 & 3 & 4 \\
+\hline
+Maximale Punktzahl & 25 & 25 & 25 & 25 \\
+\hline
+\end{tabular}
+\end{center}
+```
+\vspace{+1.5cm}
+
+\ \hspace{+1.6cm}Abgegeben von Gruppe GRUPPENNR:
+```{=latex}
+\begin{center}
+\begin{small}
+  \begin{tabular}{|l|l|l|}
+  \hline
+    \bf{Name} & \bf{Matrikelnummer} & \bf{Beitrag}\\
+    \hline
+    Beispiel Name & 1234567 & $\bullet$ Code und Text für Aufgabe X\\
+    \hline
+     & & \\
+    \hline
+     & & \\
+    \hline
+     & & \\
+    \hline
+     & & \\
+    \hline    
+  \end{tabular}
+\end{small}
+\end{center}
+```
+
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\listoftables
+
+\listoffigures
+
+\newpage
+\clearpage
+\pagenumbering{arabic}
+
+<!-- Beginnen Sie hier mit dem Schreiben des Dokuments. Passen Sie jedoch zuvor die Gruppennummer in Zeile 94 an und fügen Sie der Tabelle, die in den zeilen 95 bis 115 erstellt wird, die einzelnen Gruppenmitglieder hinzu. -->
+
+# Problem 1
+
+Beginnen Sie hier mit dem Text für Aufgabe 1.
+
+## a)
+
+## b)
+
+## c)
+
+## d)
+
+## e)
+
+## f)
+
+## g)
+
+## h)
+
+\newpage
+
+# Problem 2
+
+Beginnen Sie hier mit dem Text für Aufgabe 2.
+
+## a)
+
+## b)
+
+## c)
+
+## d)
+
+## e)
+
+\newpage
+
+# Problem 3
+
+Beginnen Sie hier mit dem Text für Aufgabe 3.
+
+## a)
+
+## b)
+
+## c)
+
+## d)
+
+## e)
+
+## f)
+
+## g)
+
+\newpage
+
+# Problem 4
+
+Beginnen Sie hier mit dem Text für Aufgabe 4.
+
+## a)
+
+## b)
+
+## c)
+
+## d)
+
+## e)
+
+## f)
+
+
+\newpage
+
+```{r cite-packages, echo = FALSE, eval = TRUE, include = FALSE}
+knitr::write_bib(c(.packages(), "rmarkdown", "knitr", "kableExtra",
+"bookdown"), "Automatisch eingelesene Dateien (keine Anpassungen notwendig)/packages.bib")
+```
+
+<!-- Löschen Sie den folgenden Abschnitt, falls Sie keine Literatur oder ähnliches zitieren. -->
+
+# Literatur
